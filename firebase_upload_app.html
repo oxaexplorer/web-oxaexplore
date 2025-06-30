@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oxaexplorer - Admin</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2rem;
+        }
+        input, textarea, button {
+            display: block;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            width: 100%;
+            max-width: 500px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Panel de Administración - Oxaexplorer</h1>
+
+    <h2>Subir Paquete Turístico</h2>
+    <input type="text" id="titulo" placeholder="Nombre del paquete">
+    <input type="text" id="precio" placeholder="Precio (S/)">
+    <textarea id="descripcion" placeholder="Descripción"></textarea>
+    <input type="file" id="imagen">
+    <button onclick="subirPaquete()">Subir Paquete</button>
+
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY",
+            authDomain: "TU_AUTH_DOMAIN",
+            projectId: "TU_PROJECT_ID",
+            storageBucket: "TU_STORAGE_BUCKET",
+            messagingSenderId: "TU_SENDER_ID",
+            appId: "TU_APP_ID",
+            databaseURL: "TU_DATABASE_URL"
+        };
+
+        // Inicializar Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const storage = firebase.storage();
+        const database = firebase.database();
+
+        async function subirPaquete() {
+            const titulo = document.getElementById('titulo').value;
+            const precio = document.getElementById('precio').value;
+            const descripcion = document.getElementById('descripcion').value;
+            const imagen = document.getElementById('imagen').files[0];
+
+            if (!titulo || !precio || !descripcion || !imagen) {
+                alert('Completa todos los campos');
+                return;
+            }
+
+            const storageRef = storage.ref('paquetes/' + imagen.name);
+            await storageRef.put(imagen);
+            const url = await storageRef.getDownloadURL();
+
+            const nuevoPaquete = {
+                titulo,
+                precio,
+                descripcion,
+                imagenUrl: url
+            };
+
+            const paqueteKey = database.ref().child('paquetes').push().key;
+            const updates = {};
+            updates['/paquetes/' + paqueteKey] = nuevoPaquete;
+
+            database.ref().update(updates);
+
+            alert('Paquete subido correctamente');
+            document.getElementById('titulo').value = '';
+            document.getElementById('precio').value = '';
+            document.getElementById('descripcion').value = '';
+            document.getElementById('imagen').value = '';
+        }
+    </script>
+</body>
+
+</html>
